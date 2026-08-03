@@ -381,6 +381,7 @@ public class JukeBox extends JavaPlugin implements Listener{
 
 	@EventHandler
 	public void onInteract(PlayerInteractEvent e){
+		if (e.isCancelled()) return;
 		if (e.getItem() == null) return;
 		if (jukeboxItem != null && (e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK)){
 			if (e.getItem().equals(jukeboxItem)){

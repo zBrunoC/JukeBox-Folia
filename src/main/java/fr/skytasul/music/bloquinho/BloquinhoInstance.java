@@ -1,6 +1,7 @@
 package fr.skytasul.music.bloquinho;
 
 import com.xxmicloxx.NoteBlockAPI.model.Song;
+import com.xxmicloxx.NoteBlockAPI.model.SoundCategory;
 import com.xxmicloxx.NoteBlockAPI.songplayer.PositionSongPlayer;
 import fr.skytasul.music.JukeBox;
 import org.bukkit.Bukkit;
@@ -29,7 +30,9 @@ public class BloquinhoInstance {
         this.currentSong = song;
         this.songPlayer = new PositionSongPlayer(song);
         this.songPlayer.setTargetLocation(location);
-        this.songPlayer.setDistance(distance); // Raio do som em blocos
+        this.songPlayer.setDistance(distance);
+
+        this.songPlayer.setCategory(SoundCategory.RECORDS);
 
         for (Player player : Bukkit.getOnlinePlayers()) {
             this.songPlayer.addPlayer(player);

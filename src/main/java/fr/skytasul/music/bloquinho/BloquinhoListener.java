@@ -11,16 +11,29 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 
 public class BloquinhoListener implements Listener {
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent e) {
         if (e.getBlock().getType() == Material.JUKEBOX) {
-            BloquinhoManager.registerJukebox(e.getBlock().getLocation(), e.getPlayer());
+            Player player = e.getPlayer();
+
+            if (!player.hasPermission("music.bloquinho.create")) {
+                JukeBox.sendMessage(player, "§cVocê não tem permissão para colocar um Bloquinho!");
+                e.setCancelled(true);
+                return;
+            }
+
+            if (BloquinhoManager.hasBloquinho(player.getUniqueId())) {
+                JukeBox.sendMessage(player, "§cVocê já possui 1 Bloquinho ativo! Quebre o seu Bloquinho anterior para colocar outro.");
+                e.setCancelled(true);
+                return;
+            }
+
+            BloquinhoManager.registerJukebox(e.getBlock().getLocation(), player);
         }
     }
 
@@ -30,6 +43,14 @@ public class BloquinhoListener implements Listener {
             Block block = e.getClickedBlock();
             if (block.getType() == Material.JUKEBOX) {
                 Player player = e.getPlayer();
+
+
+                e.setCancelled(true);
+
+                if (!player.hasPermission("music.bloquinho.use")) {
+                    JukeBox.sendMessage(player, "§cVocê não tem permissão para usar este Bloquinho!");
+                    return;
+                }
 
                 if (!BloquinhoManager.isBloquinho(block.getLocation())) {
                     BloquinhoManager.registerJukebox(block.getLocation(), player);
@@ -41,7 +62,6 @@ public class BloquinhoListener implements Listener {
                 }
 
                 BloquinhoManager.setSelectedJukebox(player, block.getLocation());
-                e.setCancelled(true);
                 CommandMusic.open(player);
             }
         }
@@ -60,13 +80,6 @@ public class BloquinhoListener implements Listener {
             if (instance.getSongPlayer() != null) {
                 instance.getSongPlayer().addPlayer(e.getPlayer());
             }
-        }
-    }
-
-    @EventHandler
-    public void onCloseGUI(InventoryCloseEvent e) {
-        if (e.getPlayer() instanceof Player player) {
-            BloquinhoManager.clearSelectedJukebox(player);
         }
     }
 }
