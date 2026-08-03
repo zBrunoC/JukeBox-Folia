@@ -11,7 +11,7 @@ folia-supported: true
 commands:
   music:
     description: Main command for musics
-    aliases: [jukebox]
+    aliases: [jukebox,musica]
     permission: music.command
   adminmusic:
     description: Admin command for musics

@@ -158,6 +158,7 @@ public class JukeBox extends JavaPlugin implements Listener{
 		}
 		if (vanillaMusicTask != null) vanillaMusicTask.cancel();
 		if (db != null) db.closeConnection();
+		fr.skytasul.music.bloquinho.BloquinhoManager.stopAll();
 		HandlerList.unregisterAll((JavaPlugin) this);
 	}
 
@@ -240,6 +241,7 @@ public class JukeBox extends JavaPlugin implements Listener{
 	private void finishEnabling(){
 		getCommand("music").setExecutor(new CommandMusic());
 		getCommand("adminmusic").setExecutor(new CommandAdmin());
+		getServer().getPluginManager().registerEvents(new fr.skytasul.music.bloquinho.BloquinhoListener(), this);
 
 		getServer().getPluginManager().registerEvents(this, this);
 

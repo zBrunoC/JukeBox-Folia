@@ -1,10 +1,13 @@
 package fr.skytasul.music;
 
 import com.xxmicloxx.NoteBlockAPI.model.Song;
+import fr.skytasul.music.bloquinho.BloquinhoInstance;
+import fr.skytasul.music.bloquinho.BloquinhoManager;
 import fr.skytasul.music.utils.Lang;
 import fr.skytasul.music.utils.Playlists;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -102,32 +105,32 @@ public class JukeBoxInventory implements Listener{
 		if (menu != ItemsMenu.DEFAULT) inv.setItem(45, menuItem);
 
 		switch (menu) {
-		case DEFAULT:
-			inv.setItem(45, stopItem);
-			if (pdata.isListening()) inv.setItem(46, toggleItem);
-			if (!JukeBox.getSongs().isEmpty() && pdata.getPlayer().hasPermission("music.random")) inv.setItem(47, randomItem);
-			inv.setItem(49, playlistMenuItem);
-			inv.setItem(50, optionsMenuItem);
-			break;
-		case OPTIONS:
-			inv.setItem(47, item(Material.BEACON, "§cerror", Lang.RIGHT_CLICK, Lang.LEFT_CLICK));
-			volumeItem();
-			if (pdata.getPlaylistType() != Playlists.RADIO) {
-				if (JukeBox.particles && pdata.getPlayer().hasPermission("music.particles")) inv.setItem(48, item(Material.FIREWORK_ROCKET, "§cerror"));
-				particlesItem();
-				if (pdata.getPlayer().hasPermission("music.play-on-join")) inv.setItem(49, item(Material.OAK_SIGN, "§cerror"));
-				joinItem();
-				if (pdata.getPlayer().hasPermission("music.shuffle")) inv.setItem(50, item(Material.BLAZE_POWDER, "§cerror"));
-				shuffleItem();
-				if (pdata.getPlayer().hasPermission("music.loop")) inv.setItem(51, item(Material.LEAD, "§cerror"));
-				repeatItem();
-			}
-			break;
-		case PLAYLIST:
-			inv.setItem(47, nextSongItem);
-			inv.setItem(48, clearItem);
-			inv.setItem(50, pdata.getPlaylistType().item);
-			break;
+			case DEFAULT:
+				inv.setItem(45, stopItem);
+				if (pdata.isListening()) inv.setItem(46, toggleItem);
+				if (!JukeBox.getSongs().isEmpty() && pdata.getPlayer().hasPermission("music.random")) inv.setItem(47, randomItem);
+				inv.setItem(49, playlistMenuItem);
+				inv.setItem(50, optionsMenuItem);
+				break;
+			case OPTIONS:
+				inv.setItem(47, item(Material.BEACON, "§cerror", Lang.RIGHT_CLICK, Lang.LEFT_CLICK));
+				volumeItem();
+				if (pdata.getPlaylistType() != Playlists.RADIO) {
+					if (JukeBox.particles && pdata.getPlayer().hasPermission("music.particles")) inv.setItem(48, item(Material.FIREWORK_ROCKET, "§cerror"));
+					particlesItem();
+					if (pdata.getPlayer().hasPermission("music.play-on-join")) inv.setItem(49, item(Material.OAK_SIGN, "§cerror"));
+					joinItem();
+					if (pdata.getPlayer().hasPermission("music.shuffle")) inv.setItem(50, item(Material.BLAZE_POWDER, "§cerror"));
+					shuffleItem();
+					if (pdata.getPlayer().hasPermission("music.loop")) inv.setItem(51, item(Material.LEAD, "§cerror"));
+					repeatItem();
+				}
+				break;
+			case PLAYLIST:
+				inv.setItem(47, nextSongItem);
+				inv.setItem(48, clearItem);
+				inv.setItem(50, pdata.getPlaylistType().item);
+				break;
 		}
 	}
 
@@ -157,110 +160,144 @@ public class JukeBoxInventory implements Listener{
 				}else {
 					if (pdata.addSong(s, false)) inv.setItem(slot, loreAdd(getSongItem(s, p), playlistLore));
 				}
-			}else if (pdata.playSong(s)) inv.setItem(slot, loreAdd(getSongItem(s, p), playlistLore));
+			}else {
+				Location selectedJukebox = BloquinhoManager.getSelectedJukebox(p);
+				if (selectedJukebox != null && selectedJukebox.getBlock().getType() == Material.JUKEBOX) {
+					BloquinhoInstance instance = BloquinhoManager.getBloquinho(selectedJukebox);
+					boolean isChanging = instance != null && instance.getCurrentSong() != null;
+
+					BloquinhoManager.playSongAtJukebox(selectedJukebox, s, p, 40);
+
+					if (isChanging) {
+						JukeBox.sendMessage(p, "§aMúsica alterada para §e" + JukeBox.getSongName(s) + " §ano Bloquinho!");
+					} else {
+						JukeBox.sendMessage(p, "§aTocando §e" + JukeBox.getSongName(s) + " §ano Bloquinho!");
+					}
+					p.closeInventory();
+					return;
+				}
+				if (pdata.playSong(s)) inv.setItem(slot, loreAdd(getSongItem(s, p), playlistLore));
+			}
 			return;
 		}
 
 		switch (slot){
 
-		case 52:
-		case 53:
-			if (JukeBox.maxPage == 0) break;
-			if (slot == 53){ //Next
-				if (page == JukeBox.maxPage - 1) break;
-				page++;
-			}else if (slot == 52){ // Later
-				if (page == 0) return;
-				page--;
-			}
-			setSongsPage(p);
-			break;
-
-		default:
-			if (slot == 45) {
-				if (menu == ItemsMenu.DEFAULT) {
-					pdata.stopPlaying(true);
-					inv.setItem(46, null);
-				}else {
-					menu = ItemsMenu.DEFAULT;
-					setItemsMenu();
+			case 52:
+			case 53:
+				if (JukeBox.maxPage == 0) break;
+				if (slot == 53){
+					if (page == JukeBox.maxPage - 1) break;
+					page++;
+				}else if (slot == 52){
+					if (page == 0) return;
+					page--;
 				}
-				return;
-			}
-
-			switch (menu) {
-			case DEFAULT:
-				switch (slot) {
-				case 46:
-					pdata.togglePlaying();
-					break;
-
-				case 47:
-					pdata.playRandom();
-					break;
-
-				case 49:
-					menu = ItemsMenu.PLAYLIST;
-					setItemsMenu();
-					break;
-
-				case 50:
-					menu = ItemsMenu.OPTIONS;
-					setItemsMenu();
-					break;
-
-				}
+				setSongsPage(p);
 				break;
 
+			default:
+				if (slot == 45) {
+					if (menu == ItemsMenu.DEFAULT) {
+						Location selectedJukebox = BloquinhoManager.getSelectedJukebox(p);
+						if (selectedJukebox != null && selectedJukebox.getBlock().getType() == Material.JUKEBOX) {
+							BloquinhoManager.stopJukebox(selectedJukebox);
+							JukeBox.sendMessage(p, "§cMúsica do Bloquinho parada!");
+							p.closeInventory();
+							return;
+						}
+						pdata.stopPlaying(true);
+						inv.setItem(46, null);
+					}else {
+						menu = ItemsMenu.DEFAULT;
+						setItemsMenu();
+					}
+					return;
+				}
 
-			case OPTIONS:
-				switch (slot) {
-				case 47:
-					if (e.getClick() == ClickType.RIGHT) pdata.setVolume((byte) (pdata.getVolume() - 10));
-					if (e.getClick() == ClickType.LEFT) pdata.setVolume((byte) (pdata.getVolume() + 10));
-					if (pdata.getVolume() < 0) pdata.setVolume((byte) 0);
-					if (pdata.getVolume() > 100) pdata.setVolume((byte) 100);
-					break;
+				switch (menu) {
+					case DEFAULT:
+						switch (slot) {
+							case 46:
+								pdata.togglePlaying();
+								break;
 
-				case 48:
-					pdata.setParticles(!pdata.hasParticles());
-					break;
+							case 47:
+								Location selectedJukeboxRandom = BloquinhoManager.getSelectedJukebox(p);
+								if (selectedJukeboxRandom != null && selectedJukeboxRandom.getBlock().getType() == Material.JUKEBOX) {
+									Song randomSong = JukeBox.randomSong();
+									if (randomSong != null) {
+										BloquinhoManager.playSongAtJukebox(selectedJukeboxRandom, randomSong, p, 30);
+										JukeBox.sendMessage(p, "§aTocando §e" + JukeBox.getSongName(randomSong) + " §ano Bloquinho!");
+										p.closeInventory();
+									}
+									break;
+								}
+								pdata.playRandom();
+								break;
 
-				case 49:
-					if (!JukeBox.autoJoin) pdata.setJoinMusic(!pdata.hasJoinMusic());
-					break;
+							case 49:
+								menu = ItemsMenu.PLAYLIST;
+								setItemsMenu();
+								break;
 
-				case 50:
-					pdata.setShuffle(!pdata.isShuffle());
-					break;
+							case 50:
+								menu = ItemsMenu.OPTIONS;
+								setItemsMenu();
+								break;
 
-				case 51:
-					pdata.setRepeat(!pdata.isRepeatEnabled());
-					break;
+						}
+						break;
+
+
+					case OPTIONS:
+						switch (slot) {
+							case 47:
+								if (e.getClick() == ClickType.RIGHT) pdata.setVolume((byte) (pdata.getVolume() - 10));
+								if (e.getClick() == ClickType.LEFT) pdata.setVolume((byte) (pdata.getVolume() + 10));
+								if (pdata.getVolume() < 0) pdata.setVolume((byte) 0);
+								if (pdata.getVolume() > 100) pdata.setVolume((byte) 100);
+								break;
+
+							case 48:
+								pdata.setParticles(!pdata.hasParticles());
+								break;
+
+							case 49:
+								if (!JukeBox.autoJoin) pdata.setJoinMusic(!pdata.hasJoinMusic());
+								break;
+
+							case 50:
+								pdata.setShuffle(!pdata.isShuffle());
+								break;
+
+							case 51:
+								pdata.setRepeat(!pdata.isRepeatEnabled());
+								break;
+						}
+						break;
+
+
+					case PLAYLIST:
+						switch (slot) {
+							case 47:
+								pdata.nextSong();
+								break;
+
+							case 48:
+								pdata.clearPlaylist();
+								setSongsPage(p);
+								break;
+
+							case 50:
+								pdata.nextPlaylist();
+								setSongsPage(p);
+								break;
+
+						}
+						break;
 				}
 				break;
-
-
-			case PLAYLIST:
-				switch (slot) {
-				case 47:
-					pdata.nextSong();
-					break;
-
-				case 48:
-					pdata.clearPlaylist();
-					setSongsPage(p);
-					break;
-
-				case 50:
-					pdata.nextPlaylist();
-					setSongsPage(p);
-					break;
-
-				}
-				break;
-			}
-			break;
 
 		}
 	}
@@ -352,9 +389,9 @@ public class JukeBoxInventory implements Listener{
 	}
 
 	public static final ItemStack radioItem;
-    static {
-        ItemStack item = new ItemStack(Material.valueOf("PLAYER_HEAD"));
-        SkullMeta headMeta = (SkullMeta) item.getItemMeta();
+	static {
+		ItemStack item = new ItemStack(Material.valueOf("PLAYER_HEAD"));
+		SkullMeta headMeta = (SkullMeta) item.getItemMeta();
 		UUID uuid = UUID.randomUUID();
 		PlayerProfile playerProfile = Bukkit.createPlayerProfile(uuid, uuid.toString().substring(0, 16));
 		PlayerTextures textures = playerProfile.getTextures();
@@ -367,10 +404,10 @@ public class JukeBoxInventory implements Listener{
 		}
 		playerProfile.setTextures(textures);
 		headMeta.setOwnerProfile(playerProfile);
-        headMeta.setDisplayName(Lang.CHANGE_PLAYLIST + Lang.RADIO);
-        item.setItemMeta(headMeta);
-        radioItem = item;
-    }
+		headMeta.setDisplayName(Lang.CHANGE_PLAYLIST + Lang.RADIO);
+		item.setItemMeta(headMeta);
+		radioItem = item;
+	}
 
 	public static List<String> splitOnSpace(String string, int minSize){
 		if (string == null || string.isEmpty()) return null;
