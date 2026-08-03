@@ -93,8 +93,25 @@ public class JukeBox extends JavaPlugin implements Listener{
 	private Database db;
 	public JukeBoxDatas datas;
 
-	private BukkitTask vanillaMusicTask = null;
+	private TaskWrapper vanillaMusicTask = null;
 	public Consumer<Player> stopVanillaMusic = null;
+	private static Boolean isFoliaCached = null;
+
+	private interface TaskWrapper {
+		void cancel();
+	}
+
+	public static boolean isFolia() {
+		if (isFoliaCached == null) {
+			try {
+				Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
+				isFoliaCached = true;
+			} catch (ClassNotFoundException e) {
+				isFoliaCached = false;
+			}
+		}
+		return isFoliaCached;
+	}
 
 	@Override
 	public void onEnable(){
@@ -200,13 +217,20 @@ public class JukeBox extends JavaPlugin implements Listener{
 		}
 
 		if (async){
-			new BukkitRunnable() {
-				@Override
-				public void run() {
+			if (isFolia()) {
+				Bukkit.getAsyncScheduler().runNow(this, task -> {
 					loadDatas();
 					finishEnabling();
-				}
-			}.runTaskAsynchronously(this);
+				});
+			} else {
+				new BukkitRunnable() {
+					@Override
+					public void run() {
+						loadDatas();
+						finishEnabling();
+					}
+				}.runTaskAsynchronously(this);
+			}
 		}else{
 			loadDatas();
 			finishEnabling();
@@ -229,11 +253,21 @@ public class JukeBox extends JavaPlugin implements Listener{
 		}
 
 		if (stopVanillaMusic != null) {
-			vanillaMusicTask = Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
-				for (PlayerData pdata : datas.getDatas()) {
-					if (pdata.isPlaying() && pdata.getPlayer() != null) stopVanillaMusic.accept(pdata.getPlayer());
-				}
-			}, 20L, 100l); // every 5 seconds
+			if (isFolia()) {
+				io.papermc.paper.threadedregions.scheduler.ScheduledTask foliaTask = Bukkit.getAsyncScheduler().runAtFixedRate(this, task -> {
+					for (PlayerData pdata : datas.getDatas()) {
+						if (pdata.isPlaying() && pdata.getPlayer() != null) stopVanillaMusic.accept(pdata.getPlayer());
+					}
+				}, 20L * 50L, 100L * 50L, java.util.concurrent.TimeUnit.MILLISECONDS);
+				vanillaMusicTask = () -> foliaTask.cancel();
+			} else {
+				BukkitTask bukkitTask = Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
+					for (PlayerData pdata : datas.getDatas()) {
+						if (pdata.isPlaying() && pdata.getPlayer() != null) stopVanillaMusic.accept(pdata.getPlayer());
+					}
+				}, 20L, 100L); // every 5 seconds
+				vanillaMusicTask = () -> bukkitTask.cancel();
+			}
 		}
 	}
 

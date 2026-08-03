@@ -1,0 +1,44 @@
+NEXT_PAGE: §bPróxima página
+LATER_PAGE: §bPágina anterior
+CURRENT_PAGE: §3§oPágina %d de %d
+PLAYER: §cVocê precisa ser um jogador para executar este comando.
+RELOAD_MUSIC: §aMúsica recarregada.
+INV_NAME: §d§lJukebox !
+TOGGLE_PLAYING: §6Pausar/Reproduzir
+VOLUME: '§9Volume da música : §b'
+RIGHT_CLICK: '§eClique direito: diminui em 10%'
+LEFT_CLICK: '§eClique esquerdo: aumenta em 10%'
+RANDOM_MUSIC: §3Música aleatória
+STOP: §cParar a música
+MUSIC_STOPPED: §aMúsica parada.
+ENABLE: Ativar
+DISABLE: Desativar
+ENABLED: Ativado
+DISABLED: Desativado
+TOGGLE_SHUFFLE_MODE: '{TOGGLE} o modo aleatório'
+TOGGLE_LOOP_MODE: '{TOGGLE} o modo de repetição'
+TOGGLE_CONNEXION_MUSIC: '{TOGGLE} a música ao conectar'
+TOGGLE_PARTICLES: '{TOGGLE} as partículas'
+MUSIC_PLAYING: '§aMúsica em reprodução:'
+INCORRECT_SYNTAX: §cSintaxe incorreta.
+RELOAD_LAUNCH: §aRecarregando o plugin.
+RELOAD_FINISH: §aPlugin recarregado com sucesso.
+AVAILABLE_COMMANDS: '§aComandos disponíveis:'
+INVALID_NUMBER: §cNúmero inválido.
+PLAYER_MUSIC_STOPPED: '§aMúsica parada para o jogador: §b'
+IN_PLAYLIST: §9§oNa Playlist
+PLAYLIST_ITEM: §dPlaylists
+OPTIONS_ITEM: §bOpções
+MENU_ITEM: §6Voltar ao menu
+CLEAR_PLAYLIST: §cLimpar a playlist atual
+NEXT_ITEM: §ePróxima música
+CHANGE_PLAYLIST: '§6§lMudar playlist: §r'
+CHANGE_PLAYLIST_LORE: |-
+  §eClique do meio para escolher um disco
+  §e para add./remover
+PLAYLIST: §5Playlist
+FAVORITES: §4Favoritos
+RADIO: §3Rádio
+UNAVAILABLE_RADIO: §cEsta opção não está disponível durante a reprodução.
+NONE: §cnenhum
+# Translated by zBrunoC

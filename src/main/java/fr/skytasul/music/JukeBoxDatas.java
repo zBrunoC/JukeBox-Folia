@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 public class JukeBoxDatas {
 
 	private static final String DB_TABLE = "`jukebox_players`";
+	private static Boolean isFoliaCached = null;
 
 	private Map<UUID, PlayerData> players = new HashMap<>();
 
@@ -51,6 +52,26 @@ public class JukeBoxDatas {
 		deleteStatement = db.new JBStatement("DELETE FROM " + DB_TABLE + " WHERE `player_uuid` = ?");
 	}
 
+	private static boolean isFolia() {
+		if (isFoliaCached == null) {
+			try {
+				Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
+				isFoliaCached = true;
+			} catch (ClassNotFoundException e) {
+				isFoliaCached = false;
+			}
+		}
+		return isFoliaCached;
+	}
+
+	private void runAsync(Runnable runnable) {
+		if (isFolia()) {
+			Bukkit.getAsyncScheduler().runNow(JukeBox.getInstance(), task -> runnable.run());
+		} else {
+			Bukkit.getScheduler().runTaskAsynchronously(JukeBox.getInstance(), runnable);
+		}
+	}
+
 	public PlayerData getDatas(UUID uuid) {
 		return players.get(uuid);
 	}
@@ -84,7 +105,7 @@ public class JukeBoxDatas {
 		}else {
 			PlayerData pdata = PlayerData.create(id);
 			players.put(id, pdata);
-			Bukkit.getScheduler().runTaskAsynchronously(JukeBox.getInstance(), () -> {
+			runAsync(() -> {
 				synchronized (getStatement) {
 					try {
 						PreparedStatement statement = getStatement.getStatement();
@@ -120,7 +141,7 @@ public class JukeBoxDatas {
 			}else {
 				boolean isDefault = pdata.isDefault(JukeBox.defaultPlayer);
 				if (!pdata.created || !isDefault) {
-					Bukkit.getScheduler().runTaskAsynchronously(JukeBox.getInstance(), () -> {
+					runAsync(() -> {
 						if (isDefault) {
 							try (PreparedStatement statement = deleteStatement.getStatement()) {
 								statement.setString(1, id.toString().replace("-", ""));
@@ -130,7 +151,7 @@ public class JukeBoxDatas {
 							}
 						}else {
 							try (PreparedStatement statement =
-								pdata.created ? insertStatement.getStatement() : updateStatement.getStatement()) {
+										 pdata.created ? insertStatement.getStatement() : updateStatement.getStatement()) {
 								int i = 1;
 								statement.setBoolean(i++, pdata.hasJoinMusic());
 								statement.setBoolean(i++, pdata.isShuffle());
